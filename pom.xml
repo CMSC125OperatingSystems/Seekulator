@@ -93,7 +93,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>cmsc125.project3.Main</mainClass>
+                                    <mainClass>cmsc125.project4.Main</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>

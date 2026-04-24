@@ -76,7 +76,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <configuration>
-                    <mainClass>cmsc125.project3.Main</mainClass>
+                    <mainClass>cmsc125.project4.Main</mainClass>
                 </configuration>
             </plugin>
 

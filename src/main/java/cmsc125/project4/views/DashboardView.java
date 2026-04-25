@@ -88,10 +88,10 @@ public class DashboardView extends JFrame {
         panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
         JTextArea aboutText = new JTextArea(
-            "Lorem ipsum dolor sit amet...\n\n" +
-                "Authors:\n[Author 1]\n[Author 2]\n[Author 3]\n\n" +
-                "GitHub Repository Link\n\n" +
-                "2026 Copyright. This project is duly for academic purposes only."
+            "Seekulator - A Disk Algorithm Simulator\n\n" +
+                "Authors:\nal1x3\nSchneidelstrom\nddrhckrzz\n\n" +
+                "GitHub Repository Link: https://github.com/CMSC125OperatingSystems/Seekulator\n\n" +
+                "2026 Copyright © All Rights Reserved. This project is duly for academic purposes only."
         );
         aboutText.setWrapStyleWord(true);
         aboutText.setLineWrap(true);

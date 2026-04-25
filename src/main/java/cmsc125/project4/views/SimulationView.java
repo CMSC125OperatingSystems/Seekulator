@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class SimulationView extends JFrame {
+public class SimulationView extends JPanel {
 
     // Top Panel Components
     private JComboBox<String> inputTypeCombo;
@@ -20,20 +20,13 @@ public class SimulationView extends JFrame {
     // Bottom Panel Components
     private JLabel lblTotalMovement;
     private JComboBox<String> speedCombo;
-    private JLabel lblTime;
+    private JLabel lblSteps;
     private JButton btnExport;
     private JButton btnBack;
-    private final Dimension defaultSize = new Dimension(1024, 768);
 
     public SimulationView() {
-        setTitle("Seekulator - Simulation");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(defaultSize);
-        setSize(defaultSize);
-        setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(Color.WHITE);
-
+        setBackground(Color.WHITE);
         initUI();
     }
 
@@ -44,11 +37,9 @@ public class SimulationView extends JFrame {
         topPanel.setBackground(Color.WHITE);
         topPanel.setBorder(new EmptyBorder(15, 20, 5, 20));
 
-        // Row 1: Dropdowns and Spinners
         JPanel row1 = new JPanel(new BorderLayout());
         row1.setBackground(Color.WHITE);
 
-        // Input Type Selection
         String[] inputTypes = {"User-Defined Input", "Random", "Text File Input"};
         inputTypeCombo = new JComboBox<>(inputTypes);
         inputTypeCombo.setFont(new Font("Arial", Font.BOLD, 16));
@@ -58,7 +49,6 @@ public class SimulationView extends JFrame {
         leftPanel.add(inputTypeCombo);
         row1.add(leftPanel, BorderLayout.WEST);
 
-        // Algorithm Selection
         String[] algorithms = {
             "FCFS: First-Come, First-Served",
             "SSTF: Shortest Seek Time First",
@@ -72,18 +62,15 @@ public class SimulationView extends JFrame {
         centerPanel.add(algorithmCombo);
         row1.add(centerPanel, BorderLayout.CENTER);
 
-        // Head Position & Direction Selection
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         rightPanel.setBackground(Color.WHITE);
 
         JLabel lblHead = new JLabel("Head Position:");
         lblHead.setFont(new Font("Arial", Font.BOLD, 16));
 
-        // Spinner bounded from 0 to 199
         headPositionSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 199, 1));
         headPositionSpinner.setFont(new Font("Arial", Font.BOLD, 16));
 
-        // Added Direction Combo to satisfy requirements
         String[] directions = {"Up/Right", "Down/Left"};
         directionCombo = new JComboBox<>(directions);
         directionCombo.setFont(new Font("Arial", Font.BOLD, 14));
@@ -93,7 +80,6 @@ public class SimulationView extends JFrame {
         rightPanel.add(directionCombo);
         row1.add(rightPanel, BorderLayout.EAST);
 
-        // Row 2: Input Text Field and Simulate Button
         JPanel row2 = new JPanel(new BorderLayout(10, 0));
         row2.setBackground(Color.WHITE);
         row2.setBorder(new EmptyBorder(10, 0, 0, 0));
@@ -126,31 +112,30 @@ public class SimulationView extends JFrame {
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(5, 20, 15, 20));
 
-        // Stats & Speed
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
         statsPanel.setBackground(Color.WHITE);
 
+        // Significantly increased font size for readability
         lblTotalMovement = new JLabel("Total Head Movement: 0");
-        lblTotalMovement.setFont(new Font("Arial", Font.BOLD, 14));
+        lblTotalMovement.setFont(new Font("Arial", Font.BOLD, 20));
 
         JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         speedPanel.setBackground(Color.WHITE);
         JLabel lblSpeed = new JLabel("Speed:");
-        lblSpeed.setFont(new Font("Arial", Font.BOLD, 14));
+        lblSpeed.setFont(new Font("Arial", Font.BOLD, 16));
         String[] speeds = {"0.5x", "1.0x", "1.5x", "2.0x"};
         speedCombo = new JComboBox<>(speeds);
         speedCombo.setSelectedItem("1.0x");
         speedPanel.add(lblSpeed);
         speedPanel.add(speedCombo);
 
-        lblTime = new JLabel("Time: 0s");
-        lblTime.setFont(new Font("Arial", Font.BOLD, 14));
+        lblSteps = new JLabel("Steps: 0");
+        lblSteps.setFont(new Font("Arial", Font.BOLD, 20));
 
         statsPanel.add(lblTotalMovement);
         statsPanel.add(speedPanel);
-        statsPanel.add(lblTime);
+        statsPanel.add(lblSteps);
 
-        // Actions (Export & Back)
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         actionPanel.setBackground(Color.WHITE);
 
@@ -174,12 +159,8 @@ public class SimulationView extends JFrame {
                 btn.setIcon(new ImageIcon(imgURL));
                 btn.setVerticalTextPosition(SwingConstants.BOTTOM);
                 btn.setHorizontalTextPosition(SwingConstants.CENTER);
-            } else {
-                System.err.println("Resource not found: " + imagePath);
             }
-        } catch (Exception e) {
-            System.err.println("Error loading image: " + imagePath);
-        }
+        } catch (Exception e) {}
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
@@ -187,7 +168,6 @@ public class SimulationView extends JFrame {
         return btn;
     }
 
-    // Getters for the Controller to hook up logic
     public JComboBox<String> getInputTypeCombo() { return inputTypeCombo; }
     public JComboBox<String> getAlgorithmCombo() { return algorithmCombo; }
     public JSpinner getHeadPositionSpinner() { return headPositionSpinner; }
@@ -197,7 +177,7 @@ public class SimulationView extends JFrame {
     public GraphPanel getGraphPanel() { return graphPanel; }
     public JLabel getLblTotalMovement() { return lblTotalMovement; }
     public JComboBox<String> getSpeedCombo() { return speedCombo; }
-    public JLabel getLblTime() { return lblTime; }
+    public JLabel getLblSteps() { return lblSteps; }
     public JButton getBtnExport() { return btnExport; }
     public JButton getBtnBack() { return btnBack; }
 }

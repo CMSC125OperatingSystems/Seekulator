@@ -3,6 +3,8 @@ package cmsc125.project4.views;
 import cmsc125.project4.services.Cylinder;
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,7 +13,7 @@ public class GraphPanel extends JPanel {
 
     private final int MIN_CYLINDER = 0;
     private final int MAX_CYLINDER = 199;
-    private final int PADDING = 40; // Increased padding for larger fonts
+    private final int PADDING = 40;
 
     private List<Cylinder> path;
     private int initialHead;
@@ -31,6 +33,12 @@ public class GraphPanel extends JPanel {
 
     public void setStep(int step) {
         this.currentStep = step;
+        repaint();
+    }
+
+    public void clear() {
+        this.path = null;
+        this.currentStep = 0;
         repaint();
     }
 
@@ -60,14 +68,32 @@ public class GraphPanel extends JPanel {
                 uniquePoints.add(c.data);
             }
         } else {
-            drawTickAndLabel(g2d, getXForCylinder(MIN_CYLINDER, startX, endX), axisY, String.valueOf(MIN_CYLINDER));
-            drawTickAndLabel(g2d, getXForCylinder(MAX_CYLINDER, startX, endX), axisY, String.valueOf(MAX_CYLINDER));
+            drawTickAndLabel(g2d, getXForCylinder(MIN_CYLINDER, startX, endX), axisY, String.valueOf(MIN_CYLINDER), axisY - 12);
+            drawTickAndLabel(g2d, getXForCylinder(MAX_CYLINDER, startX, endX), axisY, String.valueOf(MAX_CYLINDER), axisY - 12);
             return;
         }
 
-        for (int point : uniquePoints) {
+        // Sort points to calculate distances for overlap prevention
+        List<Integer> sortedPoints = new ArrayList<>(uniquePoints);
+        Collections.sort(sortedPoints);
+
+        int prevLabelEndX = -100;
+        g2d.setFont(new Font("Arial", Font.BOLD, 14));
+        FontMetrics fm = g2d.getFontMetrics();
+
+        // Stagger labels to prevent overlapping
+        for (int point : sortedPoints) {
             int xPos = getXForCylinder(point, startX, endX);
-            drawTickAndLabel(g2d, xPos, axisY, String.valueOf(point));
+            int textWidth = fm.stringWidth(String.valueOf(point));
+            int currentLabelStartX = xPos - (textWidth / 2);
+
+            int yPos = axisY - 12; // Default height
+            if (currentLabelStartX < prevLabelEndX + 8) {
+                yPos = axisY - 28; // Stagger higher if overlapping
+            }
+
+            drawTickAndLabel(g2d, xPos, axisY, String.valueOf(point), yPos);
+            prevLabelEndX = currentLabelStartX + textWidth;
         }
 
         int availableHeight = height - axisY - PADDING;
@@ -96,11 +122,8 @@ public class GraphPanel extends JPanel {
                 g2d.setColor(new Color(255, 140, 0, 80));
                 g2d.fillOval(currX - 12, currY - 12, 24, 24);
             } else {
-                if (current.virtual) {
-                    g2d.setColor(Color.RED);
-                } else {
-                    g2d.setColor(Color.BLUE);
-                }
+                if (current.virtual) g2d.setColor(Color.RED);
+                else g2d.setColor(Color.BLUE);
                 g2d.fillOval(currX - 4, currY - 4, 8, 8);
             }
 
@@ -114,15 +137,13 @@ public class GraphPanel extends JPanel {
         return startX + (int) (((double) cylinder / MAX_CYLINDER) * drawingWidth);
     }
 
-    private void drawTickAndLabel(Graphics2D g2d, int x, int y, String label) {
+    private void drawTickAndLabel(Graphics2D g2d, int x, int y, String label, int labelYPos) {
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(1.0f));
         g2d.drawLine(x, y - 6, x, y + 6);
 
-        g2d.setFont(new Font("Arial", Font.BOLD, 14));
         FontMetrics fm = g2d.getFontMetrics();
         int textWidth = fm.stringWidth(label);
-
-        g2d.drawString(label, x - (textWidth / 2), y - 12);
+        g2d.drawString(label, x - (textWidth / 2), labelYPos);
     }
 }

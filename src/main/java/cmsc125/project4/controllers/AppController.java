@@ -1,19 +1,27 @@
 package cmsc125.project4.controllers;
 
 import cmsc125.project4.models.SettingsModel;
-import cmsc125.project4.views.DashboardView;
-import cmsc125.project4.views.SettingsDialog;
-import cmsc125.project4.views.SimulationView;
-import cmsc125.project4.views.SplashView;
+import cmsc125.project4.services.*;
+import cmsc125.project4.views.*;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class AppController {
     private SplashView splashView;
     private DashboardView dashboardView;
     private SimulationView simulationView;
     private SettingsModel settingsModel;
+
+    private Timer simulationTimer;
+    private int currentAnimStep = 0;
+    private FIFO currentAlgorithm;
 
     public AppController() {
         this.settingsModel = new SettingsModel();
@@ -26,8 +34,6 @@ public class AppController {
 
     public void start() {
         splashView.setVisible(true);
-
-        // Simulate 3 seconds loading time then transition to Dashboard
         Timer timer = new Timer(3000, (ActionEvent e) -> {
             splashView.dispose();
             dashboardView.setVisible(true);
@@ -37,29 +43,131 @@ public class AppController {
     }
 
     private void initializeListeners() {
-        // --- Dashboard View Listeners ---
         dashboardView.getBtnExit().addActionListener(e -> System.exit(0));
-
         dashboardView.getBtnSettings().addActionListener(e -> showSettingsDialog());
 
-        // Transition: Dashboard -> Simulation
         dashboardView.getBtnStart().addActionListener(e -> {
             dashboardView.setVisible(false);
             simulationView.setVisible(true);
         });
 
-        // --- Simulation View Listeners ---
-        // Transition: Simulation -> Dashboard
         simulationView.getBtnBack().addActionListener(e -> {
+            if (simulationTimer != null && simulationTimer.isRunning()) {
+                simulationTimer.stop();
+            }
             simulationView.setVisible(false);
             dashboardView.setVisible(true);
         });
 
-        // Placeholder for the actual simulation logic trigger
-        simulationView.getBtnSimulate().addActionListener(e -> {
-            System.out.println("Executing Simulation...");
-            // You will hook up your SimulationService algorithms here later
+        // Handle Input Type Selection Changes (File Chooser triggers here)
+        simulationView.getInputTypeCombo().addActionListener(e -> handleInputTypeChange());
+
+        // Execute Simulation
+        simulationView.getBtnSimulate().addActionListener(e -> executeSimulation());
+    }
+
+    private void handleInputTypeChange() {
+        String selection = (String) simulationView.getInputTypeCombo().getSelectedItem();
+        JTextField inputField = simulationView.getInputTextField();
+
+        if ("Random".equals(selection)) {
+            // Generate Random queue (Max 20 for visibility, bound 0-199)
+            Random rand = new Random();
+            int length = rand.nextInt(15) + 5; // 5 to 20 requests
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < length; i++) {
+                sb.append(rand.nextInt(200));
+                if (i < length - 1) sb.append(",");
+            }
+            inputField.setText(sb.toString());
+            simulationView.getHeadPositionSpinner().setValue(rand.nextInt(200));
+            inputField.setEditable(false);
+
+        } else if ("Text File Input".equals(selection)) {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+            int result = fileChooser.showOpenDialog(simulationView);
+
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                try {
+                    List<String> lines = Files.readAllLines(file.toPath());
+                    if (lines.size() >= 1) inputField.setText(lines.get(0).trim());
+                    if (lines.size() >= 2) simulationView.getHeadPositionSpinner().setValue(Integer.parseInt(lines.get(1).trim()));
+                    if (lines.size() >= 3) {
+                        String dir = lines.get(2).trim();
+                        simulationView.getDirectionCombo().setSelectedItem(dir);
+                    }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(simulationView, "Error reading file format.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            inputField.setEditable(false);
+        } else {
+            inputField.setText("");
+            inputField.setEditable(true);
+        }
+    }
+
+    private void executeSimulation() {
+        // 1. Parse Inputs
+        String inputText = simulationView.getInputTextField().getText();
+        if (inputText.isEmpty()) {
+            JOptionPane.showMessageDialog(simulationView, "Input queue cannot be empty.");
+            return;
+        }
+
+        List<Cylinder> queue = new ArrayList<>();
+        try {
+            String[] tokens = inputText.split(",");
+            if(tokens.length > 40) {
+                JOptionPane.showMessageDialog(simulationView, "Maximum 40 requests allowed.");
+                return;
+            }
+            for (String t : tokens) queue.add(new Cylinder(Integer.parseInt(t.trim())));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(simulationView, "Invalid numbers in input.");
+            return;
+        }
+
+        int head = (int) simulationView.getHeadPositionSpinner().getValue();
+        boolean direction = simulationView.getDirectionCombo().getSelectedIndex() == 0; // 0 = Up/Right (True)
+        String algoSelection = (String) simulationView.getAlgorithmCombo().getSelectedItem();
+
+        // 2. Instantiate Algorithm
+        if (algoSelection.startsWith("FCFS")) currentAlgorithm = new FIFO(queue, head, direction);
+        else if (algoSelection.startsWith("SSTF")) currentAlgorithm = new SSTF(queue, head, direction);
+        else if (algoSelection.startsWith("SCAN")) currentAlgorithm = new SCAN(queue, head, direction);
+        else if (algoSelection.startsWith("C-SCAN")) currentAlgorithm = new C_SCAN(queue, head, direction);
+        else if (algoSelection.startsWith("LOOK")) currentAlgorithm = new LOOK(queue, head, direction);
+        else if (algoSelection.startsWith("C-LOOK")) currentAlgorithm = new C_LOOK(queue, head, direction);
+
+        // 3. Prepare the Graph path
+        currentAlgorithm.preparePath();
+        simulationView.getGraphPanel().setSimulationData(currentAlgorithm.getPath(), head);
+        simulationView.getLblTotalMovement().setText("Total Head Movement: Calculating...");
+
+        // 4. Start Animation Timer
+        if (simulationTimer != null && simulationTimer.isRunning()) simulationTimer.stop();
+
+        currentAnimStep = 0;
+
+        // Adjust speed based on combo box
+        String speedStr = (String) simulationView.getSpeedCombo().getSelectedItem();
+        double multiplier = Double.parseDouble(speedStr.replace("x", ""));
+        int delay = (int) (1000 / multiplier); // 1000ms base delay
+
+        simulationTimer = new Timer(delay, e -> {
+            if (currentAnimStep < currentAlgorithm.getPath().size()) {
+                simulationView.getGraphPanel().setStep(currentAnimStep);
+                currentAlgorithm.executeStep(); // Step logically
+                currentAnimStep++;
+            } else {
+                ((Timer)e.getSource()).stop();
+                simulationView.getLblTotalMovement().setText("Total Head Movement: " + currentAlgorithm.getTotalMovement());
+            }
         });
+        simulationTimer.start();
     }
 
     private void showSettingsDialog() {

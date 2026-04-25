@@ -31,14 +31,15 @@ public class AppController {
 
     public AppController() {
         this.settingsModel = new SettingsModel();
-        ThemeManager.applyTheme(settingsModel.getCurrentTheme());
 
         this.splashView = new SplashView();
         this.dashboardView = new DashboardView();
         this.simulationView = new SimulationView();
 
-        ThemeManager.applyThemeToComponent(simulationView, settingsModel.getCurrentTheme());
         this.originalDashboardContent = dashboardView.getContentPane();
+        ThemeManager.applyTheme(settingsModel.getCurrentTheme());
+        ThemeManager.applyThemeToComponent(simulationView, settingsModel.getCurrentTheme());
+
         initializeListeners();
     }
 

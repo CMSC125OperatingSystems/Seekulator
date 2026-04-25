@@ -20,13 +20,42 @@ public class ThemeManager {
         Color bg = isDark ? new Color(30, 30, 30) : Color.WHITE;
         Color panelBg = isDark ? new Color(50, 50, 50) : new Color(245, 245, 245);
         Color fg = isDark ? new Color(200, 200, 200) : Color.BLACK;
-        Color border = isDark ? new Color(100, 100, 100) : Color.BLACK;
+        Color border = isDark ? new Color(100, 100, 100) : new Color(150, 150, 150);
 
+        // Highlight colors for dropdown selections
+        Color selectionBg = isDark ? new Color(70, 100, 140) : new Color(180, 210, 255);
+        Color selectionFg = isDark ? Color.WHITE : Color.BLACK;
+
+        // Standard properties
         UIManager.put("Panel.background", bg);
         UIManager.put("Label.foreground", fg);
         UIManager.put("OptionPane.background", bg);
         UIManager.put("OptionPane.messageForeground", fg);
         UIManager.put("Custom.borderColor", border);
+
+        // --- METAL LAF SPECIFIC OVERRIDES ---
+        // These fix the invisible arrows on JComboBox and JSpinner
+        UIManager.put("control", panelBg);           // Base button/control background
+        UIManager.put("controlText", fg);            // Base text and ARROW color
+        UIManager.put("text", fg);
+        UIManager.put("textText", fg);
+        UIManager.put("controlHighlight", bg);       // Highlight edge
+        UIManager.put("controlShadow", border);      // Shadow edge
+        UIManager.put("controlDkShadow", border);    // Dark shadow edge
+
+        // ComboBox Dropdown Colors
+        UIManager.put("ComboBox.background", panelBg);
+        UIManager.put("ComboBox.foreground", fg);
+        UIManager.put("ComboBox.selectionBackground", selectionBg);
+        UIManager.put("ComboBox.selectionForeground", selectionFg);
+        UIManager.put("ComboBox.buttonBackground", panelBg);
+        UIManager.put("ComboBox.buttonShadow", border);
+        UIManager.put("ComboBox.buttonDarkShadow", border);
+        UIManager.put("ComboBox.buttonHighlight", bg);
+
+        // Spinner Colors
+        UIManager.put("Spinner.background", panelBg);
+        UIManager.put("Spinner.foreground", fg);
 
         for (Window window : Window.getWindows()) {
             applyColorsToComponentTree(window, bg, panelBg, fg);
@@ -63,6 +92,8 @@ public class ThemeManager {
         } else if (c instanceof JButton) {
             JButton b = (JButton) c;
             b.setForeground(fg);
+
+            // Only force background if it's a standard button, leave icon buttons alone
             if (b.isContentAreaFilled()) {
                 b.setBackground(panelBg);
             }
@@ -80,14 +111,10 @@ public class ThemeManager {
             String os = System.getProperty("os.name").toLowerCase();
             if (os.contains("win")) {
                 Process process = Runtime.getRuntime().exec("reg query \"HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\" /v AppsUseLightTheme");
-                // Fallback to light if unreadable
             } else if (os.contains("mac")) {
                 Process process = Runtime.getRuntime().exec("defaults read -g AppleInterfaceStyle");
                 return process.waitFor() == 0;
             } else {
-                // Linux / Unix environment
-
-                // 1. Try FreeDesktop DBus Portal (Standard for Wayland/Modern DEs)
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{
                         "dbus-send", "--session", "--print-reply=literal",
@@ -100,11 +127,10 @@ public class ThemeManager {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                     String line = reader.readLine();
                     if (line != null && line.contains("uint32 1")) {
-                        return true; // 1 = Dark Mode
+                        return true;
                     }
                 } catch (Exception e) {}
 
-                // 2. Fallback for KDE Plasma 6 specifically
                 try {
                     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
                     if (desktop != null && desktop.toLowerCase().contains("kde")) {
@@ -120,7 +146,6 @@ public class ThemeManager {
                     }
                 } catch (Exception e) {}
 
-                // 3. Fallback to older GTK theme env var
                 String gtkTheme = System.getenv("GTK_THEME");
                 if (gtkTheme != null && gtkTheme.toLowerCase().contains("dark")) {
                     return true;

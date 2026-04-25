@@ -9,7 +9,6 @@ public class SplashView extends JWindow {
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = GridBagConstraints.REMAINDER;

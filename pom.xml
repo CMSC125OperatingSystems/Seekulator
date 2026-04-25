@@ -6,7 +6,7 @@
 
     <groupId>cmsc125.project4</groupId>
     <artifactId>Seekulator</artifactId>
-    <version>1.4-DEV</version>
+    <version>1.4.1</version>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>

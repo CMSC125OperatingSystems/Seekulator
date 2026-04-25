@@ -192,49 +192,95 @@ public class AppController {
         }
 
         try {
-            // Get simulation metadata
+            // 1. Get simulation metadata
             String algo = (String) simulationView.getAlgorithmCombo().getSelectedItem();
             int head = (int) simulationView.getHeadPositionSpinner().getValue();
             String dir = (String) simulationView.getDirectionCombo().getSelectedItem();
             int totalMove = currentAlgorithm.getTotalMovement();
+            String queueText = simulationView.getInputTextField().getText();
 
-            // Format filename
+            // 2. Format default filename and open FileChooser
             SimpleDateFormat sdf = new SimpleDateFormat("MMddyy_HHmmss");
-            String filename = sdf.format(new Date()) + "_DS.png";
+            String defaultFilename = sdf.format(new Date()) + "_DS.png";
 
+            JFileChooser fileChooser = new JFileChooser(".");
+            fileChooser.setDialogTitle("Save Exported Graph");
+            fileChooser.setSelectedFile(new File(defaultFilename));
+            FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Images", "png");
+            fileChooser.setFileFilter(filter);
+
+            int userSelection = fileChooser.showSaveDialog(dashboardView);
+            if (userSelection != JFileChooser.APPROVE_OPTION) {
+                return; // User cancelled the save
+            }
+
+            File fileToSave = fileChooser.getSelectedFile();
+            // Ensure the file ends with .png
+            if (!fileToSave.getName().toLowerCase().endsWith(".png")) {
+                fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".png");
+            }
+
+            // 3. Prepare drawing canvas
             GraphPanel graph = simulationView.getGraphPanel();
             int width = graph.getWidth();
-            int height = graph.getHeight() + 100; // Extend canvas height for text
+            // Increased extra height to accommodate the wrapped request queue
+            int height = graph.getHeight() + 180;
 
             BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = img.createGraphics();
 
-            // Draw background
-            g2d.setColor(Color.WHITE);
+            // Draw background matching the current theme
+            Color bg = UIManager.getColor("Panel.background");
+            g2d.setColor(bg != null ? bg : Color.WHITE);
             g2d.fillRect(0, 0, width, height);
 
             // Stamp Graph onto image
             graph.paint(g2d);
 
             // Draw Metadata Text at the bottom
-            g2d.setColor(Color.BLACK);
+            Color fg = UIManager.getColor("Label.foreground");
+            g2d.setColor(fg != null ? fg : Color.BLACK);
             g2d.setFont(new Font("Arial", Font.BOLD, 16));
+            FontMetrics fm = g2d.getFontMetrics();
 
             int textYStart = graph.getHeight() + 25;
             g2d.drawString("Algorithm: " + algo, 20, textYStart);
             g2d.drawString("Initial Head Position: " + head, 20, textYStart + 25);
             g2d.drawString("Direction: " + dir, 20, textYStart + 50);
 
+            // Queue wrapping logic to prevent text from going off-screen
+            int currentY = textYStart + 75;
+            String[] queueItems = queueText.split(",");
+            StringBuilder currentLine = new StringBuilder("Request Queue: ");
+
+            for (int i = 0; i < queueItems.length; i++) {
+                String addition = queueItems[i].trim() + (i == queueItems.length - 1 ? "" : ", ");
+
+                // Check if adding the next number exceeds the image width
+                if (fm.stringWidth(currentLine.toString() + addition) < width - 40) {
+                    currentLine.append(addition);
+                } else {
+                    // Draw the current line and drop down to the next row
+                    g2d.drawString(currentLine.toString(), 20, currentY);
+                    currentY += 25;
+                    currentLine = new StringBuilder("                             ").append(addition); // Indent wrapped lines
+                }
+            }
+            g2d.drawString(currentLine.toString(), 20, currentY); // Draw the last line
+
+            // Draw Total Movement
             g2d.setFont(new Font("Arial", Font.BOLD, 20));
             g2d.drawString("Total Head Movement: " + totalMove, width / 2, textYStart + 25);
 
             g2d.dispose();
 
-            ImageIO.write(img, "png", new File(filename));
-            JOptionPane.showMessageDialog(dashboardView, "Exported successfully to: \n" + new File(filename).getAbsolutePath(), "Export Success", JOptionPane.INFORMATION_MESSAGE);
+            // 4. Save to file
+            ImageIO.write(img, "png", fileToSave);
+            JOptionPane.showMessageDialog(dashboardView, "Exported successfully to: \n" + fileToSave.getAbsolutePath(), "Export Success", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(dashboardView, "Failed to export image.", "Export Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 

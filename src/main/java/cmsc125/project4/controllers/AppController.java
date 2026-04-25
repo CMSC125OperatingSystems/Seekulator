@@ -31,21 +31,21 @@ public class AppController {
 
     public AppController() {
         this.settingsModel = new SettingsModel();
-
-        // APPLY THEME BEFORE INITIALIZING VIEWS
         ThemeManager.applyTheme(settingsModel.getCurrentTheme());
 
         this.splashView = new SplashView();
         this.dashboardView = new DashboardView();
         this.simulationView = new SimulationView();
 
+        ThemeManager.applyThemeToComponent(simulationView, settingsModel.getCurrentTheme());
         this.originalDashboardContent = dashboardView.getContentPane();
         initializeListeners();
     }
 
     public void start() {
         splashView.setVisible(true);
-        Timer timer = new Timer(3000, (ActionEvent e) -> {
+
+        Timer timer = new Timer(2500, (ActionEvent e) -> {
             splashView.dispose();
             dashboardView.setVisible(true);
         });
@@ -239,13 +239,14 @@ public class AppController {
 
     private void showSettingsDialog() {
         SettingsDialog dialog = new SettingsDialog(dashboardView);
-
         dialog.getThemeComboBox().setSelectedItem(settingsModel.getCurrentTheme());
 
         dialog.getBtnSaveClose().addActionListener(e -> {
             ThemeManager.Theme selectedTheme = (ThemeManager.Theme) dialog.getThemeComboBox().getSelectedItem();
             settingsModel.setCurrentTheme(selectedTheme);
-            ThemeManager.applyTheme(selectedTheme); // Apply the changes system-wide instantly
+            ThemeManager.applyTheme(selectedTheme);
+            ThemeManager.applyThemeToComponent(simulationView, selectedTheme);
+
             dialog.dispose();
         });
         dialog.setVisible(true);

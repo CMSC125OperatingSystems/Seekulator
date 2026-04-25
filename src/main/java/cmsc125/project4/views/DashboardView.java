@@ -8,6 +8,13 @@ public class DashboardView extends JFrame {
     private JButton btnSettings;
     private JButton btnStart;
     private JButton btnExit;
+
+    // Custom Tab Components
+    private CardLayout cardLayout;
+    private JPanel cardPanel;
+    private JButton btnHelpTab;
+    private JButton btnAboutTab;
+
     private final Dimension defaultSize = new Dimension(1024, 768);
 
     public DashboardView() {
@@ -15,6 +22,7 @@ public class DashboardView extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(defaultSize);
         setSize(defaultSize);
+        setPreferredSize(defaultSize);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
@@ -23,16 +31,32 @@ public class DashboardView extends JFrame {
         headerLabel.setBorder(new EmptyBorder(20, 0, 10, 0));
         add(headerLabel, BorderLayout.NORTH);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Arial", Font.BOLD, 20));
-        tabbedPane.addTab("How to Play", createHelpPanel());
-        tabbedPane.addTab("About", createAboutPanel());
-
+        // --- Custom Tab System ---
         JPanel centerWrapper = new JPanel(new BorderLayout());
         centerWrapper.setBorder(new EmptyBorder(0, 40, 0, 40));
-        centerWrapper.add(tabbedPane, BorderLayout.CENTER);
+
+        // Tab Buttons
+        JPanel tabBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        btnHelpTab = createTabButton("How to Play");
+        btnAboutTab = createTabButton("About");
+        tabBar.add(btnHelpTab);
+        tabBar.add(btnAboutTab);
+
+        // Tab Content (CardLayout)
+        cardLayout = new CardLayout();
+        cardPanel = new JPanel(cardLayout);
+        cardPanel.add(createHelpPanel(), "HELP");
+        cardPanel.add(createAboutPanel(), "ABOUT");
+
+        // Tab Logic
+        btnHelpTab.addActionListener(e -> switchTab("HELP"));
+        btnAboutTab.addActionListener(e -> switchTab("ABOUT"));
+
+        centerWrapper.add(tabBar, BorderLayout.NORTH);
+        centerWrapper.add(cardPanel, BorderLayout.CENTER);
         add(centerWrapper, BorderLayout.CENTER);
 
+        // --- Footer ---
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
 
@@ -51,16 +75,45 @@ public class DashboardView extends JFrame {
         bottomPanel.add(btnExit, BorderLayout.EAST);
 
         add(bottomPanel, BorderLayout.SOUTH);
+
+        // Initialize default tab state
+        switchTab("HELP");
+    }
+
+    private JButton createTabButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Arial", Font.BOLD, 20));
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorder(new EmptyBorder(10, 15, 10, 15));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private void switchTab(String tabName) {
+        cardLayout.show(cardPanel, tabName);
+
+        // Emulate selection styling by underlining the active tab
+        if ("HELP".equals(tabName)) {
+            btnHelpTab.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 3, 0, UIManager.getColor("Label.foreground")),
+                new EmptyBorder(7, 15, 10, 15)
+            ));
+            btnAboutTab.setBorder(new EmptyBorder(10, 15, 10, 15));
+        } else {
+            btnAboutTab.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 3, 0, UIManager.getColor("Label.foreground")),
+                new EmptyBorder(7, 15, 10, 15)
+            ));
+            btnHelpTab.setBorder(new EmptyBorder(10, 15, 10, 15));
+        }
     }
 
     private JPanel createHelpPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        // Dynamically get the border color from UIManager
         panel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Custom.borderColor")));
 
-        JTextArea descArea = new JTextArea(
-            "[Description]\nLorem ipsum dolor sit amet, consectetur adipiscing elit..."
-        );
+        JTextArea descArea = new JTextArea("[Description]\nLorem ipsum dolor sit amet...");
         descArea.setFont(new Font("Arial", Font.PLAIN, 16));
         descArea.setWrapStyleWord(true);
         descArea.setLineWrap(true);
@@ -93,10 +146,7 @@ public class DashboardView extends JFrame {
         panel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Custom.borderColor")));
 
         JTextArea aboutText = new JTextArea(
-            "Lorem ipsum dolor sit amet...\n\n" +
-                "Authors:\n[Author 1]\n[Author 2]\n[Author 3]\n\n" +
-                "GitHub Repository Link\n\n" +
-                "2026 Copyright. This project is duly for academic purposes only."
+            "Lorem ipsum dolor sit amet...\n\nAuthors:\n[Author 1]\n[Author 2]\n[Author 3]\n\nGitHub Repository Link\n\n2026 Copyright. This project is duly for academic purposes only."
         );
         aboutText.setFont(new Font("Arial", Font.PLAIN, 16));
         aboutText.setWrapStyleWord(true);
@@ -113,12 +163,10 @@ public class DashboardView extends JFrame {
         btn.setFont(new Font("Arial", Font.BOLD, 16));
         try {
             java.net.URL imgURL = getClass().getResource(imagePath);
-            if (imgURL != null) {
-                btn.setIcon(new ImageIcon(imgURL));
-                btn.setVerticalTextPosition(SwingConstants.BOTTOM);
-                btn.setHorizontalTextPosition(SwingConstants.CENTER);
-            }
+            if (imgURL != null) btn.setIcon(new ImageIcon(imgURL));
         } catch (Exception e) {}
+        btn.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btn.setHorizontalTextPosition(SwingConstants.CENTER);
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);

@@ -31,13 +31,15 @@ public class AppController {
 
     public AppController() {
         this.settingsModel = new SettingsModel();
+
+        // APPLY THEME BEFORE INITIALIZING VIEWS
+        ThemeManager.applyTheme(settingsModel.getCurrentTheme());
+
         this.splashView = new SplashView();
         this.dashboardView = new DashboardView();
         this.simulationView = new SimulationView();
 
-        // Save the dashboard's initial layout so we can swap back to it
         this.originalDashboardContent = dashboardView.getContentPane();
-
         initializeListeners();
     }
 
@@ -237,11 +239,13 @@ public class AppController {
 
     private void showSettingsDialog() {
         SettingsDialog dialog = new SettingsDialog(dashboardView);
-        dialog.getSfxSlider().setValue(settingsModel.getSfxVolume());
-        dialog.getBgmSlider().setValue(settingsModel.getBgmVolume());
+
+        dialog.getThemeComboBox().setSelectedItem(settingsModel.getCurrentTheme());
+
         dialog.getBtnSaveClose().addActionListener(e -> {
-            settingsModel.setSfxVolume(dialog.getSfxSlider().getValue());
-            settingsModel.setBgmVolume(dialog.getBgmSlider().getValue());
+            ThemeManager.Theme selectedTheme = (ThemeManager.Theme) dialog.getThemeComboBox().getSelectedItem();
+            settingsModel.setCurrentTheme(selectedTheme);
+            ThemeManager.applyTheme(selectedTheme); // Apply the changes system-wide instantly
             dialog.dispose();
         });
         dialog.setVisible(true);

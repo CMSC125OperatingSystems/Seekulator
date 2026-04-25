@@ -1,18 +1,14 @@
 package cmsc125.project4.models;
 
+import cmsc125.project4.services.ThemeManager.Theme;
+
 public class SettingsModel {
-    private int sfxVolume;
-    private int bgmVolume;
+    private Theme currentTheme;
 
     public SettingsModel() {
-        // Default settings
-        this.sfxVolume = 100;
-        this.bgmVolume = 100;
+        this.currentTheme = Theme.SYSTEM;
     }
 
-    public int getSfxVolume() { return sfxVolume; }
-    public void setSfxVolume(int sfxVolume) { this.sfxVolume = sfxVolume; }
-
-    public int getBgmVolume() { return bgmVolume; }
-    public void setBgmVolume(int bgmVolume) { this.bgmVolume = bgmVolume; }
+    public Theme getCurrentTheme() { return currentTheme; }
+    public void setCurrentTheme(Theme currentTheme) { this.currentTheme = currentTheme; }
 }

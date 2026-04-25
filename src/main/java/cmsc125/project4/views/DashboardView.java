@@ -17,32 +17,34 @@ public class DashboardView extends JFrame {
         setSize(defaultSize);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
-        getContentPane().setBackground(Color.WHITE);
 
-        // Header
         JLabel headerLabel = new JLabel("Seekulator", SwingConstants.CENTER);
-        headerLabel.setFont(new Font("Arial", Font.BOLD, 36));
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 48));
         headerLabel.setBorder(new EmptyBorder(20, 0, 10, 0));
         add(headerLabel, BorderLayout.NORTH);
 
-        // Tabs
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Arial", Font.BOLD, 18));
-        tabbedPane.addTab("Help", createHelpPanel());
+        tabbedPane.setFont(new Font("Arial", Font.BOLD, 20));
+        tabbedPane.addTab("How to Play", createHelpPanel());
         tabbedPane.addTab("About", createAboutPanel());
-        add(tabbedPane, BorderLayout.CENTER);
 
-        // Footer Navigation
+        JPanel centerWrapper = new JPanel(new BorderLayout());
+        centerWrapper.setBorder(new EmptyBorder(0, 40, 0, 40));
+        centerWrapper.add(tabbedPane, BorderLayout.CENTER);
+        add(centerWrapper, BorderLayout.CENTER);
+
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        btnSettings = createImageButton("/icons/settings.png" ,"Settings");
+        btnSettings = createImageButton("/icons/settings.png", "Settings");
+        btnExit = createImageButton("/icons/exit.png", "Exit");
 
         btnStart = new JButton("Start");
-        btnStart.setFont(new Font("Arial", Font.BOLD, 28));
-
-        btnExit = createImageButton("/icons/exit.png" ,"Exit");
+        btnStart.setFont(new Font("Arial", Font.BOLD, 36));
+        btnStart.setFocusPainted(false);
+        btnStart.setBorderPainted(false);
+        btnStart.setContentAreaFilled(false);
+        btnStart.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         bottomPanel.add(btnSettings, BorderLayout.WEST);
         bottomPanel.add(btnStart, BorderLayout.CENTER);
@@ -53,28 +55,31 @@ public class DashboardView extends JFrame {
 
     private JPanel createHelpPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        // Dynamically get the border color from UIManager
+        panel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Custom.borderColor")));
 
         JTextArea descArea = new JTextArea(
             "[Description]\nLorem ipsum dolor sit amet, consectetur adipiscing elit..."
         );
+        descArea.setFont(new Font("Arial", Font.PLAIN, 16));
         descArea.setWrapStyleWord(true);
         descArea.setLineWrap(true);
         descArea.setEditable(false);
-        descArea.setMargin(new Insets(10, 10, 10, 10));
+        descArea.setMargin(new Insets(15, 20, 15, 20));
         panel.add(descArea, BorderLayout.NORTH);
 
-        // Placeholder for the slider/screenshot
         JPanel imagePlaceholder = new JPanel(new BorderLayout());
-        imagePlaceholder.setBackground(Color.LIGHT_GRAY);
         JLabel imageText = new JLabel("[Screenshot Image of Instruction]", SwingConstants.CENTER);
         imagePlaceholder.add(imageText, BorderLayout.CENTER);
 
         JButton btnLeft = new JButton("<");
         JButton btnRight = new JButton(">");
-        btnLeft.setFont(new Font("Arial", Font.BOLD, 30));
-        btnRight.setFont(new Font("Arial", Font.BOLD, 30));
+        btnLeft.setFont(new Font("Arial", Font.BOLD, 48));
+        btnRight.setFont(new Font("Arial", Font.BOLD, 48));
+        btnLeft.setContentAreaFilled(false);
+        btnLeft.setBorderPainted(false);
+        btnRight.setContentAreaFilled(false);
+        btnRight.setBorderPainted(false);
 
         imagePlaceholder.add(btnLeft, BorderLayout.WEST);
         imagePlaceholder.add(btnRight, BorderLayout.EAST);
@@ -85,15 +90,15 @@ public class DashboardView extends JFrame {
 
     private JPanel createAboutPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        panel.setBorder(BorderFactory.createLineBorder(UIManager.getColor("Custom.borderColor")));
 
         JTextArea aboutText = new JTextArea(
-            "Seekulator - A Disk Algorithm Simulator\n\n" +
-                "Authors:\nal1x3\nSchneidelstrom\nddrhckrzz\n\n" +
-                "GitHub Repository Link: https://github.com/CMSC125OperatingSystems/Seekulator\n\n" +
-                "2026 Copyright © All Rights Reserved. This project is duly for academic purposes only."
+            "Lorem ipsum dolor sit amet...\n\n" +
+                "Authors:\n[Author 1]\n[Author 2]\n[Author 3]\n\n" +
+                "GitHub Repository Link\n\n" +
+                "2026 Copyright. This project is duly for academic purposes only."
         );
+        aboutText.setFont(new Font("Arial", Font.PLAIN, 16));
         aboutText.setWrapStyleWord(true);
         aboutText.setLineWrap(true);
         aboutText.setEditable(false);
@@ -112,13 +117,8 @@ public class DashboardView extends JFrame {
                 btn.setIcon(new ImageIcon(imgURL));
                 btn.setVerticalTextPosition(SwingConstants.BOTTOM);
                 btn.setHorizontalTextPosition(SwingConstants.CENTER);
-            } else {
-                System.err.println("Resource not found: " + imagePath);
             }
-        } catch (Exception e) {
-            System.err.println("Error loading image: " + imagePath);
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
@@ -126,7 +126,6 @@ public class DashboardView extends JFrame {
         return btn;
     }
 
-    // Getters for controller to attach listeners
     public JButton getBtnSettings() { return btnSettings; }
     public JButton getBtnStart() { return btnStart; }
     public JButton getBtnExit() { return btnExit; }

@@ -6,18 +6,13 @@ import java.awt.*;
 
 public class SimulationView extends JPanel {
 
-    // Top Panel Components
     private JComboBox<String> inputTypeCombo;
     private JComboBox<String> algorithmCombo;
     private JSpinner headPositionSpinner;
     private JComboBox<String> directionCombo;
     private JTextField inputTextField;
     private JButton btnSimulate;
-
-    // Center Panel Components
     private GraphPanel graphPanel;
-
-    // Bottom Panel Components
     private JLabel lblTotalMovement;
     private JComboBox<String> speedCombo;
     private JLabel lblSteps;
@@ -26,54 +21,46 @@ public class SimulationView extends JPanel {
 
     public SimulationView() {
         setLayout(new BorderLayout(10, 10));
-        setBackground(Color.WHITE);
         initUI();
     }
 
     private void initUI() {
-        // --- TOP PANEL ---
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-        topPanel.setBackground(Color.WHITE);
         topPanel.setBorder(new EmptyBorder(15, 20, 5, 20));
 
         JPanel row1 = new JPanel(new BorderLayout());
-        row1.setBackground(Color.WHITE);
 
         String[] inputTypes = {"User-Defined Input", "Random", "Text File Input"};
         inputTypeCombo = new JComboBox<>(inputTypes);
-        inputTypeCombo.setFont(new Font("Arial", Font.BOLD, 16));
+        inputTypeCombo.setFont(new Font("Arial", Font.BOLD, 18));
 
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        leftPanel.setBackground(Color.WHITE);
         leftPanel.add(inputTypeCombo);
         row1.add(leftPanel, BorderLayout.WEST);
 
         String[] algorithms = {
-            "FCFS: First-Come, First-Served",
-            "SSTF: Shortest Seek Time First",
+            "FCFS: First-Come, First-Served", "SSTF: Shortest Seek Time First",
             "SCAN", "C-SCAN", "LOOK", "C-LOOK"
         };
         algorithmCombo = new JComboBox<>(algorithms);
-        algorithmCombo.setFont(new Font("Arial", Font.BOLD, 16));
+        algorithmCombo.setFont(new Font("Arial", Font.BOLD, 18));
 
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        centerPanel.setBackground(Color.WHITE);
         centerPanel.add(algorithmCombo);
         row1.add(centerPanel, BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        rightPanel.setBackground(Color.WHITE);
 
-        JLabel lblHead = new JLabel("Head Position:");
-        lblHead.setFont(new Font("Arial", Font.BOLD, 16));
+        JLabel lblHead = new JLabel("Head Position: ");
+        lblHead.setFont(new Font("Arial", Font.BOLD, 18));
 
         headPositionSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 199, 1));
-        headPositionSpinner.setFont(new Font("Arial", Font.BOLD, 16));
+        headPositionSpinner.setFont(new Font("Arial", Font.BOLD, 18));
 
         String[] directions = {"Up/Right", "Down/Left"};
         directionCombo = new JComboBox<>(directions);
-        directionCombo.setFont(new Font("Arial", Font.BOLD, 14));
+        directionCombo.setFont(new Font("Arial", Font.BOLD, 16));
 
         rightPanel.add(lblHead);
         rightPanel.add(headPositionSpinner);
@@ -81,15 +68,14 @@ public class SimulationView extends JPanel {
         row1.add(rightPanel, BorderLayout.EAST);
 
         JPanel row2 = new JPanel(new BorderLayout(10, 0));
-        row2.setBackground(Color.WHITE);
         row2.setBorder(new EmptyBorder(10, 0, 0, 0));
 
         inputTextField = new JTextField();
-        inputTextField.setFont(new Font("Arial", Font.PLAIN, 18));
+        inputTextField.setFont(new Font("Arial", Font.PLAIN, 20));
         inputTextField.setToolTipText("Enter up to 40 requests separated by commas (e.g. 11,15,35,42)");
 
         btnSimulate = new JButton("Simulate");
-        btnSimulate.setFont(new Font("Arial", Font.BOLD, 16));
+        btnSimulate.setFont(new Font("Arial", Font.BOLD, 18));
 
         row2.add(inputTextField, BorderLayout.CENTER);
         row2.add(btnSimulate, BorderLayout.EAST);
@@ -98,33 +84,27 @@ public class SimulationView extends JPanel {
         topPanel.add(row2);
         add(topPanel, BorderLayout.NORTH);
 
-        // --- CENTER PANEL (Graph) ---
         JPanel centerContainer = new JPanel(new BorderLayout());
-        centerContainer.setBackground(Color.WHITE);
         centerContainer.setBorder(new EmptyBorder(10, 20, 10, 20));
 
         graphPanel = new GraphPanel();
         centerContainer.add(graphPanel, BorderLayout.CENTER);
         add(centerContainer, BorderLayout.CENTER);
 
-        // --- BOTTOM PANEL ---
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(5, 20, 15, 20));
 
-        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
-        statsPanel.setBackground(Color.WHITE);
+        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 30, 0));
 
-        // Significantly increased font size for readability
         lblTotalMovement = new JLabel("Total Head Movement: 0");
         lblTotalMovement.setFont(new Font("Arial", Font.BOLD, 20));
 
         JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        speedPanel.setBackground(Color.WHITE);
-        JLabel lblSpeed = new JLabel("Speed:");
-        lblSpeed.setFont(new Font("Arial", Font.BOLD, 16));
+        JLabel lblSpeed = new JLabel("Speed: ");
+        lblSpeed.setFont(new Font("Arial", Font.BOLD, 20));
         String[] speeds = {"0.5x", "1.0x", "1.5x", "2.0x"};
         speedCombo = new JComboBox<>(speeds);
+        speedCombo.setFont(new Font("Arial", Font.PLAIN, 18));
         speedCombo.setSelectedItem("1.0x");
         speedPanel.add(lblSpeed);
         speedPanel.add(speedCombo);
@@ -137,7 +117,6 @@ public class SimulationView extends JPanel {
         statsPanel.add(lblSteps);
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        actionPanel.setBackground(Color.WHITE);
 
         btnExport = createImageButton("/icons/export.png", "Export");
         btnBack = createImageButton("/icons/back.png", "Back");
@@ -152,7 +131,7 @@ public class SimulationView extends JPanel {
 
     private JButton createImageButton(String imagePath, String text) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("Arial", Font.BOLD, 12));
+        btn.setFont(new Font("Arial", Font.BOLD, 14));
         try {
             java.net.URL imgURL = getClass().getResource(imagePath);
             if (imgURL != null) {

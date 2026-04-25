@@ -45,6 +45,13 @@ public class GraphPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        // Fetch dynamic theme colors
+        Color fgColor = UIManager.getColor("Label.foreground");
+        Color borderColor = UIManager.getColor("Custom.borderColor");
+
+        setBorder(BorderFactory.createLineBorder(borderColor, 2));
+
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -54,7 +61,7 @@ public class GraphPanel extends JPanel {
         int startX = PADDING;
         int endX = width - PADDING;
 
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(fgColor); // Use dynamic foreground for lines
         g2d.setStroke(new BasicStroke(2.0f));
         g2d.drawLine(startX, axisY, endX, axisY);
 
@@ -68,8 +75,10 @@ public class GraphPanel extends JPanel {
                 uniquePoints.add(c.data);
             }
         } else {
-            drawTickAndLabel(g2d, getXForCylinder(MIN_CYLINDER, startX, endX), axisY, String.valueOf(MIN_CYLINDER), axisY - 12);
-            drawTickAndLabel(g2d, getXForCylinder(MAX_CYLINDER, startX, endX), axisY, String.valueOf(MAX_CYLINDER), axisY - 12);
+            drawTickAndLabel(g2d, getXForCylinder(MIN_CYLINDER, startX, endX), axisY, String.valueOf(MIN_CYLINDER),
+                axisY - 12, fgColor);
+            drawTickAndLabel(g2d, getXForCylinder(MAX_CYLINDER, startX, endX), axisY, String.valueOf(MAX_CYLINDER),
+                axisY - 12, fgColor);
             return;
         }
 
@@ -87,12 +96,12 @@ public class GraphPanel extends JPanel {
             int textWidth = fm.stringWidth(String.valueOf(point));
             int currentLabelStartX = xPos - (textWidth / 2);
 
-            int yPos = axisY - 12; // Default height
+            int yPos = axisY - 12;
             if (currentLabelStartX < prevLabelEndX + 8) {
-                yPos = axisY - 28; // Stagger higher if overlapping
+                yPos = axisY - 28;
             }
 
-            drawTickAndLabel(g2d, xPos, axisY, String.valueOf(point), yPos);
+            drawTickAndLabel(g2d, xPos, axisY, String.valueOf(point), yPos, fgColor);
             prevLabelEndX = currentLabelStartX + textWidth;
         }
 
@@ -102,7 +111,7 @@ public class GraphPanel extends JPanel {
         int prevX = getXForCylinder(initialHead, startX, endX);
         int prevY = axisY + (yOffset / 2);
 
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(fgColor); // Initial dot dynamic color
         g2d.fillOval(prevX - 4, prevY - 4, 8, 8);
 
         for (int i = 0; i <= currentStep && i < path.size(); i++) {
@@ -110,7 +119,7 @@ public class GraphPanel extends JPanel {
             int currX = getXForCylinder(current.data, startX, endX);
             int currY = prevY + yOffset;
 
-            g2d.setColor(Color.BLACK);
+            g2d.setColor(fgColor); // Path lines dynamic color
             g2d.setStroke(new BasicStroke(1.5f));
             g2d.drawLine(prevX, prevY, currX, currY);
 
@@ -123,7 +132,7 @@ public class GraphPanel extends JPanel {
                 g2d.fillOval(currX - 12, currY - 12, 24, 24);
             } else {
                 if (current.virtual) g2d.setColor(Color.RED);
-                else g2d.setColor(Color.BLUE);
+                else g2d.setColor(new Color(0, 102, 204)); // Darker blue for visibility on light/dark
                 g2d.fillOval(currX - 4, currY - 4, 8, 8);
             }
 
@@ -137,8 +146,8 @@ public class GraphPanel extends JPanel {
         return startX + (int) (((double) cylinder / MAX_CYLINDER) * drawingWidth);
     }
 
-    private void drawTickAndLabel(Graphics2D g2d, int x, int y, String label, int labelYPos) {
-        g2d.setColor(Color.BLACK);
+    private void drawTickAndLabel(Graphics2D g2d, int x, int y, String label, int labelYPos, Color fgColor) {
+        g2d.setColor(fgColor);
         g2d.setStroke(new BasicStroke(1.0f));
         g2d.drawLine(x, y - 6, x, y + 6);
 

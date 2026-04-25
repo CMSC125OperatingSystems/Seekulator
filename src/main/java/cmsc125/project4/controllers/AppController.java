@@ -59,7 +59,7 @@ public class AppController {
             dashboardView.setVisible(true);
         });
 
-        // Handle Input Type Selection Changes (File Chooser triggers here)
+        // Handle Input Type Selection Changes
         simulationView.getInputTypeCombo().addActionListener(e -> handleInputTypeChange());
 
         // Execute Simulation
@@ -84,7 +84,7 @@ public class AppController {
             inputField.setEditable(false);
 
         } else if ("Text File Input".equals(selection)) {
-            JFileChooser fileChooser = new JFileChooser();
+            JFileChooser fileChooser = new JFileChooser("."); // Opens in current directory
             fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
             int result = fileChooser.showOpenDialog(simulationView);
 
@@ -144,8 +144,15 @@ public class AppController {
 
         // 3. Prepare the Graph path
         currentAlgorithm.preparePath();
-        simulationView.getGraphPanel().setSimulationData(currentAlgorithm.getPath(), head);
+
+        // FIX: Create a deep copy of the calculated path to pass to the GraphPanel.
+        // This prevents the graph from breaking when executeStep() removes elements.
+        List<Cylinder> fullPath = new ArrayList<>(currentAlgorithm.getPath());
+        simulationView.getGraphPanel().setSimulationData(fullPath, head);
         simulationView.getLblTotalMovement().setText("Total Head Movement: Calculating...");
+
+        // FIX: Cache the total steps so the shrinking internal path doesn't stop the timer early.
+        int totalSteps = fullPath.size();
 
         // 4. Start Animation Timer
         if (simulationTimer != null && simulationTimer.isRunning()) simulationTimer.stop();
@@ -158,7 +165,8 @@ public class AppController {
         int delay = (int) (1000 / multiplier); // 1000ms base delay
 
         simulationTimer = new Timer(delay, e -> {
-            if (currentAnimStep < currentAlgorithm.getPath().size()) {
+            // Check against the cached totalSteps
+            if (currentAnimStep < totalSteps) {
                 simulationView.getGraphPanel().setStep(currentAnimStep);
                 currentAlgorithm.executeStep(); // Step logically
                 currentAnimStep++;
@@ -173,11 +181,9 @@ public class AppController {
     private void showSettingsDialog() {
         SettingsDialog dialog = new SettingsDialog(dashboardView);
 
-        // Populate view with current model data
         dialog.getSfxSlider().setValue(settingsModel.getSfxVolume());
         dialog.getBgmSlider().setValue(settingsModel.getBgmVolume());
 
-        // Handle save action
         dialog.getBtnSaveClose().addActionListener(e -> {
             settingsModel.setSfxVolume(dialog.getSfxSlider().getValue());
             settingsModel.setBgmVolume(dialog.getBgmSlider().getValue());

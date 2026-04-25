@@ -3,13 +3,15 @@ package cmsc125.project4.views;
 import cmsc125.project4.services.Cylinder;
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GraphPanel extends JPanel {
 
     private final int MIN_CYLINDER = 0;
     private final int MAX_CYLINDER = 199;
-    private final int PADDING = 30;
+    private final int PADDING = 40; // Increased padding for larger fonts
 
     private List<Cylinder> path;
     private int initialHead;
@@ -39,47 +41,68 @@ public class GraphPanel extends JPanel {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int width = getWidth();
-        int axisY = 50;
+        int height = getHeight();
+        int axisY = 60;
         int startX = PADDING;
         int endX = width - PADDING;
 
-        // Draw main axis
         g2d.setColor(Color.BLACK);
-        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.setStroke(new BasicStroke(2.0f));
         g2d.drawLine(startX, axisY, endX, axisY);
 
-        drawTickAndLabel(g2d, getXForCylinder(0, startX, endX), axisY, "0");
-        drawTickAndLabel(g2d, getXForCylinder(199, startX, endX), axisY, "199");
+        Set<Integer> uniquePoints = new HashSet<>();
+        uniquePoints.add(MIN_CYLINDER);
+        uniquePoints.add(MAX_CYLINDER);
 
-        // If no data, stop drawing here
-        if (path == null || path.isEmpty()) return;
+        if (path != null && !path.isEmpty()) {
+            uniquePoints.add(initialHead);
+            for (Cylinder c : path) {
+                uniquePoints.add(c.data);
+            }
+        } else {
+            drawTickAndLabel(g2d, getXForCylinder(MIN_CYLINDER, startX, endX), axisY, String.valueOf(MIN_CYLINDER));
+            drawTickAndLabel(g2d, getXForCylinder(MAX_CYLINDER, startX, endX), axisY, String.valueOf(MAX_CYLINDER));
+            return;
+        }
 
-        int yOffset = 40; // Pixels to drop per step
+        for (int point : uniquePoints) {
+            int xPos = getXForCylinder(point, startX, endX);
+            drawTickAndLabel(g2d, xPos, axisY, String.valueOf(point));
+        }
+
+        int availableHeight = height - axisY - PADDING;
+        int yOffset = Math.max(15, availableHeight / (path.size() + 1));
+
         int prevX = getXForCylinder(initialHead, startX, endX);
-        int prevY = axisY + 20;
+        int prevY = axisY + (yOffset / 2);
 
-        // Draw the starting head position
-        drawTickAndLabel(g2d, prevX, axisY, String.valueOf(initialHead));
-        g2d.fillOval(prevX - 3, prevY - 3, 6, 6);
+        g2d.setColor(Color.BLACK);
+        g2d.fillOval(prevX - 4, prevY - 4, 8, 8);
 
-        // Draw paths up to the current simulation step
         for (int i = 0; i <= currentStep && i < path.size(); i++) {
             Cylinder current = path.get(i);
             int currX = getXForCylinder(current.data, startX, endX);
             int currY = prevY + yOffset;
 
-            // Draw line from previous to current
             g2d.setColor(Color.BLACK);
+            g2d.setStroke(new BasicStroke(1.5f));
             g2d.drawLine(prevX, prevY, currX, currY);
 
-            // Draw dot
-            if (current.virtual) {
-                g2d.setColor(Color.RED); // Virtual boundaries in red
+            boolean isCurrentPosition = (i == currentStep);
+
+            if (isCurrentPosition) {
+                g2d.setColor(new Color(255, 140, 0));
+                g2d.fillOval(currX - 7, currY - 7, 14, 14);
+                g2d.setColor(new Color(255, 140, 0, 80));
+                g2d.fillOval(currX - 12, currY - 12, 24, 24);
             } else {
-                g2d.setColor(Color.BLUE);
-                drawTickAndLabel(g2d, currX, axisY, String.valueOf(current.data));
+                if (current.virtual) {
+                    g2d.setColor(Color.RED);
+                } else {
+                    g2d.setColor(Color.BLUE);
+                }
+                g2d.fillOval(currX - 4, currY - 4, 8, 8);
             }
-            g2d.fillOval(currX - 3, currY - 3, 6, 6);
 
             prevX = currX;
             prevY = currY;
@@ -92,10 +115,14 @@ public class GraphPanel extends JPanel {
     }
 
     private void drawTickAndLabel(Graphics2D g2d, int x, int y, String label) {
-        g2d.drawLine(x, y - 5, x, y + 5);
+        g2d.setColor(Color.BLACK);
+        g2d.setStroke(new BasicStroke(1.0f));
+        g2d.drawLine(x, y - 6, x, y + 6);
+
+        g2d.setFont(new Font("Arial", Font.BOLD, 14));
         FontMetrics fm = g2d.getFontMetrics();
         int textWidth = fm.stringWidth(label);
-        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
-        g2d.drawString(label, x - (textWidth / 2), y - 10);
+
+        g2d.drawString(label, x - (textWidth / 2), y - 12);
     }
 }

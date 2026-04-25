@@ -8,12 +8,13 @@ public class DashboardView extends JFrame {
     private JButton btnSettings;
     private JButton btnStart;
     private JButton btnExit;
+    private final Dimension defaultSize = new Dimension(1024, 768);
 
     public DashboardView() {
         setTitle("Seekulator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1024, 768);
-        setResizable(false);
+        setMinimumSize(defaultSize);
+        setSize(defaultSize);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(Color.WHITE);

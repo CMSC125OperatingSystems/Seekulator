@@ -23,12 +23,13 @@ public class SimulationView extends JFrame {
     private JLabel lblTime;
     private JButton btnExport;
     private JButton btnBack;
+    private final Dimension defaultSize = new Dimension(1024, 768);
 
     public SimulationView() {
         setTitle("Seekulator - Simulation");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1024, 768);
-        setResizable(false);
+        setMinimumSize(defaultSize);
+        setSize(defaultSize);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(Color.WHITE);

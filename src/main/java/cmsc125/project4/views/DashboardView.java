@@ -36,14 +36,12 @@ public class DashboardView extends JFrame {
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        btnSettings = new JButton("Settings");
-        btnSettings.setFont(new Font("Arial", Font.BOLD, 16));
+        btnSettings = createImageButton("/icons/settings.png" ,"Settings");
 
         btnStart = new JButton("Start");
         btnStart.setFont(new Font("Arial", Font.BOLD, 28));
 
-        btnExit = new JButton("Exit");
-        btnExit.setFont(new Font("Arial", Font.BOLD, 16));
+        btnExit = createImageButton("/icons/exit.png" ,"Exit");
 
         bottomPanel.add(btnSettings, BorderLayout.WEST);
         bottomPanel.add(btnStart, BorderLayout.CENTER);
@@ -102,6 +100,29 @@ public class DashboardView extends JFrame {
         panel.add(new JScrollPane(aboutText), BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JButton createImageButton(String imagePath, String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Arial", Font.BOLD, 16));
+        try {
+            java.net.URL imgURL = getClass().getResource(imagePath);
+            if (imgURL != null) {
+                btn.setIcon(new ImageIcon(imgURL));
+                btn.setVerticalTextPosition(SwingConstants.BOTTOM);
+                btn.setHorizontalTextPosition(SwingConstants.CENTER);
+            } else {
+                System.err.println("Resource not found: " + imagePath);
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading image: " + imagePath);
+            e.printStackTrace();
+        }
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     // Getters for controller to attach listeners

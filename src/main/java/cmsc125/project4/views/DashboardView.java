@@ -253,7 +253,7 @@ public class DashboardView extends JFrame {
         repoTitle.setFont(titleFont);
         repoTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel repoLink = new JLabel("<html><a href=''>https://github.com/CMSC125OperatingSystems/Seekulator.git</a></html>");
+        JLabel repoLink = new JLabel("<html><center><a href=''>https://github.com/CMSC125OperatingSystems/Seekulator.git</a></center></html>", SwingConstants.CENTER);
         repoLink.setFont(regFont);
         repoLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
         repoLink.setAlignmentX(Component.CENTER_ALIGNMENT);

@@ -40,8 +40,8 @@ public class SimulationView extends JPanel {
         row1.add(leftPanel, BorderLayout.WEST);
 
         String[] algorithms = {
-            "FCFS: First-Come, First-Served", "SSTF: Shortest Seek Time First",
-            "SCAN", "C-SCAN", "LOOK", "C-LOOK"
+                "FCFS: First-Come, First-Served", "SSTF: Shortest Seek Time First",
+                "SCAN", "C-SCAN", "LOOK", "C-LOOK"
         };
         algorithmCombo = new JComboBox<>(algorithms);
         algorithmCombo.setFont(new Font("Arial", Font.BOLD, 18));
@@ -118,8 +118,8 @@ public class SimulationView extends JPanel {
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
 
-        btnExport = createImageButton("/icons/export.png", "Export");
-        btnBack = createImageButton("/icons/back.png", "Back");
+        btnExport = createIconButton("Export");
+        btnBack = createIconButton("Back");
 
         actionPanel.add(btnExport);
         actionPanel.add(btnBack);
@@ -129,17 +129,29 @@ public class SimulationView extends JPanel {
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    private JButton createImageButton(String imagePath, String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
+    public void updateIcons(boolean isDark) {
+        String suffix = isDark ? "_light.png" : "_dark.png";
+        // Uniform 24x24 size for Simulation view icons
+        updateButtonIcon(btnExport, "/icons/export" + suffix, 24, 24);
+        updateButtonIcon(btnBack, "/icons/back" + suffix, 24, 24);
+    }
+
+    private void updateButtonIcon(JButton btn, String path, int width, int height) {
         try {
-            java.net.URL imgURL = getClass().getResource(imagePath);
+            java.net.URL imgURL = getClass().getResource(path);
             if (imgURL != null) {
-                btn.setIcon(new ImageIcon(imgURL));
-                btn.setVerticalTextPosition(SwingConstants.BOTTOM);
-                btn.setHorizontalTextPosition(SwingConstants.CENTER);
+                ImageIcon originalIcon = new ImageIcon(imgURL);
+                Image scaledImage = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                btn.setIcon(new ImageIcon(scaledImage));
             }
         } catch (Exception e) {}
+    }
+
+    private JButton createIconButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Arial", Font.BOLD, 14));
+        btn.setVerticalTextPosition(SwingConstants.BOTTOM);
+        btn.setHorizontalTextPosition(SwingConstants.CENTER);
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);

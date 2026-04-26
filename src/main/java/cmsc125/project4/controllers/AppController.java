@@ -18,12 +18,19 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+
 public class AppController {
     private SplashView splashView;
-    private DashboardView dashboardView; // Acts as the main window
+    private DashboardView dashboardView;
     private SimulationView simulationView;
     private SettingsModel settingsModel;
-    private Container originalDashboardContent; // Used for swapping views
+    private Container originalDashboardContent;
 
     private Timer simulationTimer;
     private int currentAnimStep = 0;
@@ -37,8 +44,14 @@ public class AppController {
         this.simulationView = new SimulationView();
 
         this.originalDashboardContent = dashboardView.getContentPane();
-        ThemeManager.applyTheme(settingsModel.getCurrentTheme());
-        ThemeManager.applyThemeToComponent(simulationView, settingsModel.getCurrentTheme());
+
+        ThemeManager.Theme currentTheme = settingsModel.getCurrentTheme();
+        ThemeManager.applyTheme(currentTheme);
+        ThemeManager.applyThemeToComponent(simulationView, currentTheme);
+
+        boolean isDark = ThemeManager.isDarkTheme(currentTheme);
+        dashboardView.updateIcons(isDark);
+        simulationView.updateIcons(isDark);
 
         initializeListeners();
     }
@@ -58,7 +71,6 @@ public class AppController {
         dashboardView.getBtnExit().addActionListener(e -> System.exit(0));
         dashboardView.getBtnSettings().addActionListener(e -> showSettingsDialog());
 
-        // Switch to Simulation Panel
         dashboardView.getBtnStart().addActionListener(e -> {
             simulationView.getGraphPanel().clear();
             dashboardView.setContentPane(simulationView);
@@ -66,7 +78,6 @@ public class AppController {
             dashboardView.repaint();
         });
 
-        // Switch back to Dashboard Panel
         simulationView.getBtnBack().addActionListener(e -> {
             if (simulationTimer != null && simulationTimer.isRunning()) {
                 simulationTimer.stop();
@@ -95,6 +106,7 @@ public class AppController {
             }
             inputField.setText(sb.toString());
             simulationView.getHeadPositionSpinner().setValue(rand.nextInt(200));
+            simulationView.getDirectionCombo().setSelectedIndex(rand.nextInt(2));
             inputField.setEditable(false);
 
         } else if ("Text File Input".equals(selection)) {
@@ -126,7 +138,7 @@ public class AppController {
     private void executeSimulation() {
         String inputText = simulationView.getInputTextField().getText();
         if (inputText.isEmpty()) {
-            JOptionPane.showMessageDialog(dashboardView, "Input queue cannot be empty.");
+            JOptionPane.showMessageDialog(dashboardView, "Input queue cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -134,12 +146,19 @@ public class AppController {
         try {
             String[] tokens = inputText.split(",");
             if(tokens.length > 40) {
-                JOptionPane.showMessageDialog(dashboardView, "Maximum 40 requests allowed.");
+                JOptionPane.showMessageDialog(dashboardView, "Maximum 40 requests allowed.", "Boundary Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            for (String t : tokens) queue.add(new Cylinder(Integer.parseInt(t.trim())));
+            for (String t : tokens) {
+                int val = Integer.parseInt(t.trim());
+                if (val < 0 || val > 199) {
+                    JOptionPane.showMessageDialog(dashboardView, "Request queue values must be between 0 and 199.", "Boundary Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                queue.add(new Cylinder(val));
+            }
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(dashboardView, "Invalid numbers in input.");
+            JOptionPane.showMessageDialog(dashboardView, "Invalid numbers in input.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -192,52 +211,66 @@ public class AppController {
         }
 
         try {
-            // 1. Get simulation metadata
+            // 1. Gather Simulation Data
             String algo = (String) simulationView.getAlgorithmCombo().getSelectedItem();
             int head = (int) simulationView.getHeadPositionSpinner().getValue();
             String dir = (String) simulationView.getDirectionCombo().getSelectedItem();
             int totalMove = currentAlgorithm.getTotalMovement();
             String queueText = simulationView.getInputTextField().getText();
 
-            // 2. Format default filename and open FileChooser
+            // 2. Setup File Chooser with PNG and PDF options
             SimpleDateFormat sdf = new SimpleDateFormat("MMddyy_HHmmss");
-            String defaultFilename = sdf.format(new Date()) + "_DS.png";
+            String defaultFilename = sdf.format(new Date()) + "_DS";
 
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setDialogTitle("Save Exported Graph");
+
+            FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG Image (*.png)", "png");
+            FileNameExtensionFilter pdfFilter = new FileNameExtensionFilter("PDF Document (*.pdf)", "pdf");
+
+            // Add both filters to the dropdown
+            fileChooser.addChoosableFileFilter(pngFilter);
+            fileChooser.addChoosableFileFilter(pdfFilter);
+            fileChooser.setFileFilter(pngFilter); // Set PNG as default
+
             fileChooser.setSelectedFile(new File(defaultFilename));
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Images", "png");
-            fileChooser.setFileFilter(filter);
 
             int userSelection = fileChooser.showSaveDialog(dashboardView);
             if (userSelection != JFileChooser.APPROVE_OPTION) {
-                return; // User cancelled the save
+                return; // User canceled
             }
 
             File fileToSave = fileChooser.getSelectedFile();
-            // Ensure the file ends with .png
-            if (!fileToSave.getName().toLowerCase().endsWith(".png")) {
-                fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".png");
+            javax.swing.filechooser.FileFilter selectedFilter = fileChooser.getFileFilter();
+
+            // Determine if the user selected PDF or PNG
+            boolean saveAsPdf = false;
+            if (selectedFilter == pdfFilter || fileToSave.getName().toLowerCase().endsWith(".pdf")) {
+                saveAsPdf = true;
+                if (!fileToSave.getName().toLowerCase().endsWith(".pdf")) {
+                    fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".pdf");
+                }
+            } else {
+                // Default to PNG
+                if (!fileToSave.getName().toLowerCase().endsWith(".png")) {
+                    fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".png");
+                }
             }
 
-            // 3. Prepare drawing canvas
+            // 3. Create the Image (We do this for BOTH PNG and PDF)
             GraphPanel graph = simulationView.getGraphPanel();
             int width = graph.getWidth();
-            // Increased extra height to accommodate the wrapped request queue
             int height = graph.getHeight() + 180;
 
             BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = img.createGraphics();
 
-            // Draw background matching the current theme
             Color bg = UIManager.getColor("Panel.background");
             g2d.setColor(bg != null ? bg : Color.WHITE);
             g2d.fillRect(0, 0, width, height);
 
-            // Stamp Graph onto image
             graph.paint(g2d);
 
-            // Draw Metadata Text at the bottom
             Color fg = UIManager.getColor("Label.foreground");
             g2d.setColor(fg != null ? fg : Color.BLACK);
             g2d.setFont(new Font("Arial", Font.BOLD, 16));
@@ -248,7 +281,6 @@ public class AppController {
             g2d.drawString("Initial Head Position: " + head, 20, textYStart + 25);
             g2d.drawString("Direction: " + dir, 20, textYStart + 50);
 
-            // Queue wrapping logic to prevent text from going off-screen
             int currentY = textYStart + 75;
             String[] queueItems = queueText.split(",");
             StringBuilder currentLine = new StringBuilder("Request Queue: ");
@@ -256,30 +288,47 @@ public class AppController {
             for (int i = 0; i < queueItems.length; i++) {
                 String addition = queueItems[i].trim() + (i == queueItems.length - 1 ? "" : ", ");
 
-                // Check if adding the next number exceeds the image width
                 if (fm.stringWidth(currentLine.toString() + addition) < width - 40) {
                     currentLine.append(addition);
                 } else {
-                    // Draw the current line and drop down to the next row
                     g2d.drawString(currentLine.toString(), 20, currentY);
                     currentY += 25;
-                    currentLine = new StringBuilder("                             ").append(addition); // Indent wrapped lines
+                    currentLine = new StringBuilder("                             ").append(addition);
                 }
             }
-            g2d.drawString(currentLine.toString(), 20, currentY); // Draw the last line
+            g2d.drawString(currentLine.toString(), 20, currentY);
 
-            // Draw Total Movement
             g2d.setFont(new Font("Arial", Font.BOLD, 20));
             g2d.drawString("Total Head Movement: " + totalMove, width / 2, textYStart + 25);
-
             g2d.dispose();
 
-            // 4. Save to file
-            ImageIO.write(img, "png", fileToSave);
+            // 4. Save to the chosen format
+            if (saveAsPdf) {
+                // Save as PDF using Apache PDFBox
+                try (PDDocument doc = new PDDocument()) {
+                    // Create a PDF Page matching exactly the width and height of our image
+                    PDPage page = new PDPage(new PDRectangle(width, height));
+                    doc.addPage(page);
+
+                    // Convert Java BufferedImage into a PDFBox image
+                    PDImageXObject pdImage = LosslessFactory.createFromImage(doc, img);
+
+                    // Draw the image exactly covering the PDF page
+                    try (PDPageContentStream contentStream = new PDPageContentStream(doc, page)) {
+                        contentStream.drawImage(pdImage, 0, 0, width, height);
+                    }
+
+                    doc.save(fileToSave);
+                }
+            } else {
+                // Save as standard PNG
+                ImageIO.write(img, "png", fileToSave);
+            }
+
             JOptionPane.showMessageDialog(dashboardView, "Exported successfully to: \n" + fileToSave.getAbsolutePath(), "Export Success", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(dashboardView, "Failed to export image.", "Export Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(dashboardView, "Failed to export file.", "Export Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
     }
@@ -291,8 +340,13 @@ public class AppController {
         dialog.getBtnSaveClose().addActionListener(e -> {
             ThemeManager.Theme selectedTheme = (ThemeManager.Theme) dialog.getThemeComboBox().getSelectedItem();
             settingsModel.setCurrentTheme(selectedTheme);
+
             ThemeManager.applyTheme(selectedTheme);
             ThemeManager.applyThemeToComponent(simulationView, selectedTheme);
+
+            boolean isDark = ThemeManager.isDarkTheme(selectedTheme);
+            dashboardView.updateIcons(isDark);
+            simulationView.updateIcons(isDark);
 
             dialog.dispose();
         });

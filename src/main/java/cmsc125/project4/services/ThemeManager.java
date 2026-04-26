@@ -8,6 +8,10 @@ import java.io.InputStreamReader;
 public class ThemeManager {
     public enum Theme { LIGHT, DARK, SYSTEM }
 
+    public static boolean isDarkTheme(Theme theme) {
+        return (theme == Theme.SYSTEM) ? isSystemDarkMode() : (theme == Theme.DARK);
+    }
+
     public static void applyTheme(Theme theme) {
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
@@ -15,35 +19,30 @@ public class ThemeManager {
             e.printStackTrace();
         }
 
-        boolean isDark = (theme == Theme.SYSTEM) ? isSystemDarkMode() : (theme == Theme.DARK);
+        boolean isDark = isDarkTheme(theme);
 
         Color bg = isDark ? new Color(30, 30, 30) : Color.WHITE;
         Color panelBg = isDark ? new Color(50, 50, 50) : new Color(245, 245, 245);
         Color fg = isDark ? new Color(200, 200, 200) : Color.BLACK;
         Color border = isDark ? new Color(100, 100, 100) : new Color(150, 150, 150);
 
-        // Highlight colors for dropdown selections
         Color selectionBg = isDark ? new Color(70, 100, 140) : new Color(180, 210, 255);
         Color selectionFg = isDark ? Color.WHITE : Color.BLACK;
 
-        // Standard properties
         UIManager.put("Panel.background", bg);
         UIManager.put("Label.foreground", fg);
         UIManager.put("OptionPane.background", bg);
         UIManager.put("OptionPane.messageForeground", fg);
         UIManager.put("Custom.borderColor", border);
 
-        // --- METAL LAF SPECIFIC OVERRIDES ---
-        // These fix the invisible arrows on JComboBox and JSpinner
-        UIManager.put("control", panelBg);           // Base button/control background
-        UIManager.put("controlText", fg);            // Base text and ARROW color
+        UIManager.put("control", panelBg);
+        UIManager.put("controlText", fg);
         UIManager.put("text", fg);
         UIManager.put("textText", fg);
-        UIManager.put("controlHighlight", bg);       // Highlight edge
-        UIManager.put("controlShadow", border);      // Shadow edge
-        UIManager.put("controlDkShadow", border);    // Dark shadow edge
+        UIManager.put("controlHighlight", bg);
+        UIManager.put("controlShadow", border);
+        UIManager.put("controlDkShadow", border);
 
-        // ComboBox Dropdown Colors
         UIManager.put("ComboBox.background", panelBg);
         UIManager.put("ComboBox.foreground", fg);
         UIManager.put("ComboBox.selectionBackground", selectionBg);
@@ -53,7 +52,6 @@ public class ThemeManager {
         UIManager.put("ComboBox.buttonDarkShadow", border);
         UIManager.put("ComboBox.buttonHighlight", bg);
 
-        // Spinner Colors
         UIManager.put("Spinner.background", panelBg);
         UIManager.put("Spinner.foreground", fg);
 
@@ -66,7 +64,7 @@ public class ThemeManager {
     }
 
     public static void applyThemeToComponent(Component root, Theme theme) {
-        boolean isDark = (theme == Theme.SYSTEM) ? isSystemDarkMode() : (theme == Theme.DARK);
+        boolean isDark = isDarkTheme(theme);
         Color bg = isDark ? new Color(30, 30, 30) : Color.WHITE;
         Color panelBg = isDark ? new Color(50, 50, 50) : new Color(245, 245, 245);
         Color fg = isDark ? new Color(200, 200, 200) : Color.BLACK;
@@ -92,8 +90,6 @@ public class ThemeManager {
         } else if (c instanceof JButton) {
             JButton b = (JButton) c;
             b.setForeground(fg);
-
-            // Only force background if it's a standard button, leave icon buttons alone
             if (b.isContentAreaFilled()) {
                 b.setBackground(panelBg);
             }
@@ -117,11 +113,11 @@ public class ThemeManager {
             } else {
                 try {
                     Process process = Runtime.getRuntime().exec(new String[]{
-                        "dbus-send", "--session", "--print-reply=literal",
-                        "--dest=org.freedesktop.portal.Desktop",
-                        "/org/freedesktop/portal/desktop",
-                        "org.freedesktop.portal.Settings.Read",
-                        "string:org.freedesktop.appearance", "string:color-scheme"
+                            "dbus-send", "--session", "--print-reply=literal",
+                            "--dest=org.freedesktop.portal.Desktop",
+                            "/org/freedesktop/portal/desktop",
+                            "org.freedesktop.portal.Settings.Read",
+                            "string:org.freedesktop.appearance", "string:color-scheme"
                     });
                     process.waitFor();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -135,7 +131,7 @@ public class ThemeManager {
                     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
                     if (desktop != null && desktop.toLowerCase().contains("kde")) {
                         Process process = Runtime.getRuntime().exec(new String[]{
-                            "kreadconfig6", "--group", "General", "--key", "ColorScheme"
+                                "kreadconfig6", "--group", "General", "--key", "ColorScheme"
                         });
                         process.waitFor();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));

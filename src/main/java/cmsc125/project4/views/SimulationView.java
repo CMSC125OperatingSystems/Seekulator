@@ -6,18 +6,13 @@ import java.awt.*;
 
 public class SimulationView extends JPanel {
 
-    private JComboBox<String> inputTypeCombo;
-    private JComboBox<String> algorithmCombo;
+    private JComboBox<String> inputTypeCombo, algorithmCombo, directionCombo, speedCombo;
     private JSpinner headPositionSpinner;
-    private JComboBox<String> directionCombo;
     private JTextField inputTextField;
-    private JButton btnSimulate;
+    private JButton btnSimulate, btnExport, btnBack;
     private GraphPanel graphPanel;
-    private JLabel lblTotalMovement;
-    private JComboBox<String> speedCombo;
-    private JLabel lblSteps;
-    private JButton btnExport;
-    private JButton btnBack;
+    private JScrollPane scrollPane;
+    private JLabel lblTotalMovement, lblSteps;
 
     public SimulationView() {
         setLayout(new BorderLayout(10, 10));
@@ -88,7 +83,13 @@ public class SimulationView extends JPanel {
         centerContainer.setBorder(new EmptyBorder(10, 20, 10, 20));
 
         graphPanel = new GraphPanel();
-        centerContainer.add(graphPanel, BorderLayout.CENTER);
+
+        // Wrap the graphPanel in a JScrollPane
+        scrollPane = new JScrollPane(graphPanel);
+        scrollPane.getHorizontalScrollBar().setUnitIncrement(16); // Make scrolling smoother
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        centerContainer.add(scrollPane, BorderLayout.CENTER);
+
         add(centerContainer, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout());
@@ -131,7 +132,6 @@ public class SimulationView extends JPanel {
 
     public void updateIcons(boolean isDark) {
         String suffix = isDark ? "_light.png" : "_dark.png";
-        // Uniform 24x24 size for Simulation view icons
         updateButtonIcon(btnExport, "/icons/export" + suffix, 24, 24);
         updateButtonIcon(btnBack, "/icons/back" + suffix, 24, 24);
     }
@@ -166,6 +166,7 @@ public class SimulationView extends JPanel {
     public JTextField getInputTextField() { return inputTextField; }
     public JButton getBtnSimulate() { return btnSimulate; }
     public GraphPanel getGraphPanel() { return graphPanel; }
+    public JScrollPane getScrollPane() { return scrollPane; } // Exposed for Controller
     public JLabel getLblTotalMovement() { return lblTotalMovement; }
     public JComboBox<String> getSpeedCombo() { return speedCombo; }
     public JLabel getLblSteps() { return lblSteps; }

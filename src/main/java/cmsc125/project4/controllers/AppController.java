@@ -26,11 +26,11 @@ import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class AppController {
-    private SplashView splashView;
-    private DashboardView dashboardView;
-    private SimulationView simulationView;
-    private SettingsModel settingsModel;
-    private Container originalDashboardContent;
+    private final SplashView splashView;
+    private final DashboardView dashboardView;
+    private final SimulationView simulationView;
+    private final SettingsModel settingsModel;
+    private final Container originalDashboardContent;
 
     private Timer simulationTimer;
     private int currentAnimStep = 0;
@@ -118,7 +118,7 @@ public class AppController {
                 File file = fileChooser.getSelectedFile();
                 try {
                     List<String> lines = Files.readAllLines(file.toPath());
-                    if (lines.size() >= 1) inputField.setText(lines.get(0).trim());
+                    if (!lines.isEmpty()) inputField.setText(lines.get(0).trim());
                     if (lines.size() >= 2) simulationView.getHeadPositionSpinner().setValue(Integer.parseInt(lines.get(1).trim()));
                     if (lines.size() >= 3) {
                         String dir = lines.get(2).trim();
@@ -177,6 +177,10 @@ public class AppController {
 
         List<Cylinder> fullPath = new ArrayList<>(currentAlgorithm.getPath());
         simulationView.getGraphPanel().setSimulationData(fullPath, head);
+
+        // Reset scroll position to top-left when starting
+        simulationView.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+
         simulationView.getLblTotalMovement().setText("Total Head Movement: Calculating...");
         simulationView.getLblSteps().setText("Steps: 0");
 
@@ -194,6 +198,28 @@ public class AppController {
             if (currentAnimStep < totalSteps) {
                 simulationView.getGraphPanel().setStep(currentAnimStep);
                 currentAlgorithm.executeStep();
+
+                // AUTO-SCROLL LOGIC
+                Point targetNode = simulationView.getGraphPanel().getCurrentNodeLocation();
+                if (targetNode != null) {
+                    JViewport viewport = simulationView.getScrollPane().getViewport();
+                    Rectangle viewRect = viewport.getViewRect();
+
+                    // Create a rectangle representing where we want the camera to look
+                    // (centering the target node in the middle of the viewport)
+                    int centeredX = targetNode.x - (viewRect.width / 2);
+                    int centeredY = targetNode.y - (viewRect.height / 2);
+
+                    // Ensure the camera doesn't try to scroll out of bounds (negative numbers)
+                    centeredX = Math.max(0, centeredX);
+                    centeredY = Math.max(0, centeredY);
+
+                    viewRect.x = centeredX;
+                    viewRect.y = centeredY;
+
+                    simulationView.getGraphPanel().scrollRectToVisible(viewRect);
+                }
+
                 currentAnimStep++;
                 simulationView.getLblSteps().setText("Steps: " + currentAnimStep);
             } else {
@@ -228,7 +254,6 @@ public class AppController {
             FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG Image (*.png)", "png");
             FileNameExtensionFilter pdfFilter = new FileNameExtensionFilter("PDF Document (*.pdf)", "pdf");
 
-            // Add both filters to the dropdown
             fileChooser.addChoosableFileFilter(pngFilter);
             fileChooser.addChoosableFileFilter(pdfFilter);
             fileChooser.setFileFilter(pngFilter); // Set PNG as default
@@ -243,7 +268,6 @@ public class AppController {
             File fileToSave = fileChooser.getSelectedFile();
             javax.swing.filechooser.FileFilter selectedFilter = fileChooser.getFileFilter();
 
-            // Determine if the user selected PDF or PNG
             boolean saveAsPdf = false;
             if (selectedFilter == pdfFilter || fileToSave.getName().toLowerCase().endsWith(".pdf")) {
                 saveAsPdf = true;
@@ -251,16 +275,16 @@ public class AppController {
                     fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".pdf");
                 }
             } else {
-                // Default to PNG
                 if (!fileToSave.getName().toLowerCase().endsWith(".png")) {
                     fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".png");
                 }
             }
 
-            // 3. Create the Image (We do this for BOTH PNG and PDF)
+            // 3. Create the Image using the PREFERRED SIZE of the massive graph
+            //    (Not just the cropped portion visible on the screen)
             GraphPanel graph = simulationView.getGraphPanel();
-            int width = graph.getWidth();
-            int height = graph.getHeight() + 180;
+            int width = graph.getPreferredSize().width;
+            int height = graph.getPreferredSize().height + 180; // Add space at bottom for text
 
             BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = img.createGraphics();
@@ -276,7 +300,7 @@ public class AppController {
             g2d.setFont(new Font("Arial", Font.BOLD, 16));
             FontMetrics fm = g2d.getFontMetrics();
 
-            int textYStart = graph.getHeight() + 25;
+            int textYStart = graph.getPreferredSize().height + 25;
             g2d.drawString("Algorithm: " + algo, 20, textYStart);
             g2d.drawString("Initial Head Position: " + head, 20, textYStart + 25);
             g2d.drawString("Direction: " + dir, 20, textYStart + 50);
@@ -299,21 +323,18 @@ public class AppController {
             g2d.drawString(currentLine.toString(), 20, currentY);
 
             g2d.setFont(new Font("Arial", Font.BOLD, 20));
-            g2d.drawString("Total Head Movement: " + totalMove, width / 2, textYStart + 25);
+            // Push "Total Head Movement" near the right side since width is now very wide
+            g2d.drawString("Total Head Movement: " + totalMove, width - 400, textYStart + 25);
             g2d.dispose();
 
             // 4. Save to the chosen format
             if (saveAsPdf) {
-                // Save as PDF using Apache PDFBox
                 try (PDDocument doc = new PDDocument()) {
-                    // Create a PDF Page matching exactly the width and height of our image
                     PDPage page = new PDPage(new PDRectangle(width, height));
                     doc.addPage(page);
 
-                    // Convert Java BufferedImage into a PDFBox image
                     PDImageXObject pdImage = LosslessFactory.createFromImage(doc, img);
 
-                    // Draw the image exactly covering the PDF page
                     try (PDPageContentStream contentStream = new PDPageContentStream(doc, page)) {
                         contentStream.drawImage(pdImage, 0, 0, width, height);
                     }
@@ -321,7 +342,6 @@ public class AppController {
                     doc.save(fileToSave);
                 }
             } else {
-                // Save as standard PNG
                 ImageIO.write(img, "png", fileToSave);
             }
 
